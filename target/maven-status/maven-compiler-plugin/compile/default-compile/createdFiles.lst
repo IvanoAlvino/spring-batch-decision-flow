@@ -1,7 +1,7 @@
-hello/PersonItemProcessor.class
 hello/BatchConfiguration$1.class
+hello/PersonNameAndSurnameToUpperCaseProcessor.class
 hello/Application.class
 hello/BatchConfiguration.class
-hello/PersonItemProcessor2.class
 hello/Person.class
+hello/PersonNameToLowerCaseProcessor.class
 hello/JobCompletionNotificationListener.class

@@ -5,12 +5,13 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.batch.item.ItemProcessor;
 
-public class PersonItemProcessor implements ItemProcessor<Person, Person> {
+public class PersonNameAndSurnameToUpperCaseProcessor implements ItemProcessor<Person, Person> {
 
-    private static final Logger log = LoggerFactory.getLogger(PersonItemProcessor.class);
+    private static final Logger log = LoggerFactory
+        .getLogger(PersonNameAndSurnameToUpperCaseProcessor.class);
 
     @Override
-    public Person process(final Person person) throws Exception {
+    public Person process(final Person person) {
         final String firstName = person.getFirstName().toUpperCase();
         final String lastName = person.getLastName().toUpperCase();
 

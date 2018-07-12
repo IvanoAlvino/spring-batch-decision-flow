@@ -5,17 +5,17 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.batch.item.ItemProcessor;
 
-public class PersonItemProcessor2 implements ItemProcessor<Person, Person> {
+public class PersonNameToLowerCaseProcessor implements ItemProcessor<Person, Person> {
 
-    private static final Logger log = LoggerFactory.getLogger(PersonItemProcessor.class);
+    private static final Logger log = LoggerFactory.getLogger(PersonNameAndSurnameToUpperCaseProcessor.class);
 
     @Override
-    public Person process(final Person person) throws Exception {
+    public Person process(final Person person) {
         final String firstName = person.getFirstName().toLowerCase();
 
         final Person transformedPerson = new Person(firstName, person.getLastName());
 
-        log.info("Using Ivano processing to Convert (" + person + ") into (" + transformedPerson + ")");
+        log.info("Converting (" + person + ") into (" + transformedPerson + ")");
 
         return transformedPerson;
     }
