@@ -1,7 +1,8 @@
-hello/BatchConfiguration$1.class
-hello/PersonNameAndSurnameToUpperCaseProcessor.class
+hello/FlowDecision.class
+hello/NoOpItemWriterStep1.class
+hello/NoOpItemReaderStep1.class
 hello/Application.class
 hello/BatchConfiguration.class
-hello/Person.class
-hello/PersonNameToLowerCaseProcessor.class
-hello/JobCompletionNotificationListener.class
+hello/TaskletStep3.class
+hello/NoOpItemWriterStep2.class
+hello/NoOpItemReaderStep2.class

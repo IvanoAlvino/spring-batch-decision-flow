@@ -1,26 +1,17 @@
 package hello;
 
-import javax.sql.DataSource;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.builder.FlowBuilder;
+import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
-import org.springframework.batch.item.database.JdbcBatchItemWriter;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
-import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
-import org.springframework.batch.item.file.FlatFileItemReader;
-import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
-import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 
 @Configuration
 @EnableBatchProcessing
@@ -33,84 +24,91 @@ public class BatchConfiguration {
     public StepBuilderFactory stepBuilderFactory;
 
     /* Job definition **/
-    /********************/
+    /*******************/
     @Bean
-    public Job importUserJob(JobCompletionNotificationListener listener, Step readFromCsvStep,
-        Step readFromDbStep) {
-        return jobBuilderFactory.get("importUserJob")
+    public Job importJob() {
+        FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("flow1");
+
+        Flow flow =  flowBuilder
+            .start(step1())
+            .next(decision())
+            .on(FlowDecision.COMPLETED)
+            .to(step2())
+            .from(decision())
+            .on(FlowDecision.FAILED)
+            .to(step3())
+            .end();
+
+        return jobBuilderFactory.get("importUserLoopJob")
             .incrementer(new RunIdIncrementer())
-            .listener(listener)
-            .start(readFromCsvStep)
-            .next(readFromDbStep)
+            .start(flow)
+            .end()
             .build();
     }
 
     /* Steps definitions **/
-    /***********************/
+    /**********************/
     @Bean
-    public Step readFromCsvStep(JdbcBatchItemWriter<Person> writer) {
-        return stepBuilderFactory.get("readFromCsvStep")
-            .<Person, Person> chunk(10)
-            .reader(personCsvReader())
-            .processor(processor())
-            .writer(writer)
+    public Step step1() {
+        return stepBuilderFactory.get("step1")
+            .<String, String> chunk(10)
+            .reader(readerStep1())
+            .writer(writerStep1())
+            .build();
+    }
+
+
+    @Bean
+    public Step step2() {
+        return stepBuilderFactory.get("step2")
+            .<String, String> chunk(10)
+            .reader(readerStep2())
+            .writer(writerStep2())
             .build();
     }
 
     @Bean
-    public Step readFromDbStep(ItemReader<Person> personDbReader, JdbcBatchItemWriter<Person> writer) {
-        return stepBuilderFactory.get("readFromDbStep")
-            .<Person, Person> chunk(10)
-            .reader(personDbReader)
-            .processor(processor2())
-            .writer(writer)
+    public Step step3() {
+        return stepBuilderFactory.get("step3")
+            .tasklet(tasklet())
             .build();
     }
 
-    /* Step 1: read from CSV, output to database **/
-    /***********************************************/
+    /* Step 1: read and log **/
+    /*************************/
     @Bean
-    public FlatFileItemReader<Person> personCsvReader() {
-        return new FlatFileItemReaderBuilder<Person>()
-            .name("personItemReader")
-            .resource(new ClassPathResource("sample-data.csv"))
-            .delimited()
-            .names(new String[]{"firstName", "lastName"})
-            .fieldSetMapper(new BeanWrapperFieldSetMapper<Person>() {{
-                setTargetType(Person.class);
-            }})
-            .build();
+    public NoOpItemReaderStep1 readerStep1(){
+        return new NoOpItemReaderStep1();
     }
 
     @Bean
-    public PersonNameAndSurnameToUpperCaseProcessor processor() {
-        return new PersonNameAndSurnameToUpperCaseProcessor();
+    public NoOpItemWriterStep1 writerStep1(){
+        return new NoOpItemWriterStep1();
+    }
+
+    /* Step 2: read and log **/
+    /*************************/
+    @Bean
+    public NoOpItemReaderStep2 readerStep2(){
+        return new NoOpItemReaderStep2();
     }
 
     @Bean
-    public JdbcBatchItemWriter<Person> databaseWriter(DataSource dataSource) {
-        return new JdbcBatchItemWriterBuilder<Person>()
-                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
-                .sql("INSERT INTO people (first_name, last_name) VALUES (:firstName, :lastName)")
-                .dataSource(dataSource)
-                .build();
+    public NoOpItemWriterStep2 writerStep2(){
+        return new NoOpItemWriterStep2();
     }
 
-    /* Step 2: read from database, output to database **/
-    /****************************************************/
+    /* Step 3: log and finish **/
+    /***************************/
     @Bean
-    public ItemReader<Person> personDbReader(DataSource dataSource) {
-        JdbcCursorItemReader<Person> dbReader = new JdbcCursorItemReader<>();
-
-        dbReader.setDataSource(dataSource);
-        dbReader.setSql("SELECT first_name, last_name FROM people");
-        dbReader.setRowMapper(new BeanPropertyRowMapper<>(Person.class));
-
-        return dbReader;
+    public TaskletStep3 tasklet(){
+        return new TaskletStep3();
     }
 
+    /* Decision maker **/
+    /*******************/
     @Bean
-    public PersonNameToLowerCaseProcessor processor2() {
-        return new PersonNameToLowerCaseProcessor();
+    public FlowDecision decision(){
+        return new FlowDecision();
     }
 }

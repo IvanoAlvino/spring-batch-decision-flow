@@ -7,10 +7,9 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="gs-batch-processing" />
+        <module name="maven-archiver (1)" />
+        <module name="maven-archiver (2)" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="gs-batch-processing" target="1.8" />
-    </bytecodeTargetLevel>
   </component>
 </project>
